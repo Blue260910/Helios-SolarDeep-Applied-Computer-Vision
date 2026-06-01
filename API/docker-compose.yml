@@ -1,0 +1,26 @@
+services:
+  helios-api:
+    build: .
+    container_name: helios-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+
+    # Local:  ./models:/models:ro
+    # Azure:  ~/helios-models:/models:ro
+    volumes:
+      - ~/helios-models:/models:ro
+
+    environment:
+      HELIOS_WEIGHTS: /models/solar_deep_best.pth
+      HELIOS_META: /models/model_meta.json
+
+    # ── GPU (Azure NC-series com NVIDIA Container Toolkit instalado) ────────────
+    # Descomente o bloco abaixo para habilitar acesso à GPU:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]

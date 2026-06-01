@@ -1,0 +1,30 @@
+{
+  "model": "SolarDeep",
+  "version": "5.0.0",
+  "task": "binary_flare_detection",
+  "channels": [
+    "94",
+    "131",
+    "171",
+    "304"
+  ],
+  "threshold": 0.82,
+  "classes": [
+    "no_flare",
+    "flare"
+  ],
+  "input_shape": [
+    4,
+    256,
+    256
+  ],
+  "f1_test": 47.83,
+  "auc_test": 85.59,
+  "accuracy_test": 83.75,
+  "dataset": "SDOBenchmark (NASA/FHNW)",
+  "improvements": [
+    "last-timestep-10min",
+    "oversample-5x",
+    "BCEWithLogitsLoss-pos_weight"
+  ]
+}
