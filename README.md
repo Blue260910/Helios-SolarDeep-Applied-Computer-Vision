@@ -52,7 +52,8 @@ Dataset: SDOBenchmark (NASA/FHNW) · 8.336 treino + 886 teste · 2 classes (flar
 
 ## Caso de Uso Real — Integração com o Site HELIOS
 
-O modelo treinado neste projeto é o núcleo de detecção de flares do **site HELIOS** ([github.com/Blue260910/Helius](https://github.com/Blue260910/Helius)), plataforma de monitoramento de clima espacial desenvolvida em paralelo pela equipe para a Global Solution 2026.
+O modelo treinado neste projeto é o núcleo de detecção de flares do **site HELIOS** ([Helios](https://helius-zeta.vercel.app/)), plataforma de monitoramento de clima espacial desenvolvida em paralelo pela equipe para a Global Solution 2026.
+<img width="2277" height="847" alt="image" src="https://github.com/user-attachments/assets/ac9c7d51-77ed-49d2-8948-08a550edf1c5" />
 
 ### Pipeline de produção
 
