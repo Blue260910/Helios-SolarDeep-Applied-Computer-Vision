@@ -1,3 +1,13 @@
+---
+title: HELIOS Solar Flare Detection
+emoji: ☀️
+colorFrom: orange
+colorTo: red
+sdk: gradio
+app_file: gradio_app.py
+pinned: false
+---
+
 # HELIOS — Solar Flare Detection API
 
 Serviço de inferência do modelo **SolarDeep (CNN-B)** treinado sobre o [SDOBenchmark](https://www.kaggle.com/datasets/fhnw-i4ds/sdobenchmark) (NASA/FHNW).  

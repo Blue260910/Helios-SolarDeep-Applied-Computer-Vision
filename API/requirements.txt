@@ -1,3 +1,6 @@
+# PyTorch em versão CPU (Hugging Face Spaces free roda em CPU) — build menor e mais rápido
+--extra-index-url https://download.pytorch.org/whl/cpu
+
 fastapi>=0.111.0
 uvicorn[standard]>=0.29.0
 torch>=2.0.0
@@ -5,3 +8,4 @@ torchvision>=0.15.0
 Pillow>=10.0.0
 numpy>=1.24.0
 python-multipart>=0.0.9
+gradio>=4.0.0
