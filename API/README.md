@@ -1,7 +1,7 @@
 ---
 title: HELIOS Solar Flare Detection
 emoji: ☀️
-colorFrom: orange
+colorFrom: yellow
 colorTo: red
 sdk: gradio
 app_file: gradio_app.py

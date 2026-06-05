@@ -6,6 +6,13 @@ Sistema de detecção de flares solares M/X-class usando redes neurais convoluci
 
 ---
 
+## Links da Entrega
+
+- **Repositório GitHub:** _(este repositório público)_
+- **Vídeo de demonstração (até 3 min):** _<!-- TODO: inserir link do YouTube -->_
+
+---
+
 ## Integrantes
 
 | Nome | RM |
@@ -36,8 +43,7 @@ Dataset: SDOBenchmark (NASA/FHNW) · 8.336 treino + 886 teste · 2 classes (flar
 ├── helios_acv.ipynb          # Notebook principal — treino, avaliação, Gradio
 ├── requirements.txt          # Dependências Python
 ├── README.md                 # Este arquivo
-├── helios_export/
-│   ├── solar_deep_best.pth   # Pesos do melhor modelo (CNN-B Solar-Deep)
+├── helios_export/            # Artefatos gerados pelo notebook
 │   ├── model_meta.json       # Metadados do modelo (threshold, métricas)
 │   ├── confusion_matrices.png
 │   ├── learning_curves.png
@@ -45,8 +51,17 @@ Dataset: SDOBenchmark (NASA/FHNW) · 8.336 treino + 886 teste · 2 classes (flar
 │   ├── prediction_examples.png
 │   ├── class_distribution.png
 │   └── channel_comparison.png
-└── test_samples/             # Imagens de teste (2 flare + 2 no_flare)
+└── API/                      # Serviço de inferência (FastAPI + Gradio, deploy no HF Space)
+    ├── main.py · gradio_app.py · inference.py · model.py
+    ├── Dockerfile · requirements.txt
+    └── models/
+        ├── solar_deep_best.pth   # Pesos do melhor modelo (CNN-B Solar-Deep)
+        └── model_meta.json       # Metadados do modelo (threshold, métricas)
 ```
+
+> As imagens de teste (2 flare + 2 no_flare) e os pesos `solar_deep_best.pth`
+> são gerados ao rodar o notebook (células de exportação). Os pesos versionados
+> ficam em `API/models/` para alimentar o serviço de inferência.
 
 ---
 
@@ -114,7 +129,7 @@ from PIL import Image
 # Carregar modelo
 # (copie as classes SolarDeep da célula models001 do notebook)
 model = SolarDeep()
-model.load_state_dict(torch.load('helios_export/solar_deep_best.pth', map_location='cpu'))
+model.load_state_dict(torch.load('API/models/solar_deep_best.pth', map_location='cpu'))
 model.eval()
 ```
 

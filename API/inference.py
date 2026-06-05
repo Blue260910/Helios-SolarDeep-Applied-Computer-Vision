@@ -13,13 +13,21 @@ from typing import Literal
 
 import numpy as np
 import torch
-from PIL import Image
+from PIL import Image, ImageFilter
 
 from model import SolarDeep
 
 # ── Constantes ─────────────────────────────────────────────────────────────────
 
 CHANNELS = ["94", "131", "171", "304"]
+
+# Fração do menor lado da imagem usada como janela de "zoom" na região ativa.
+# O SolarDeep foi treinado em patches do SDOBenchmark com zoom numa região ativa
+# preenchendo o quadro; as imagens "latest" da NASA são do DISCO INTEIRO. Sem este
+# recorte, o Global Average Pooling tira a média de um disco quase vazio e a
+# probabilidade fica travada (~0.66). Validado offline: 0.25 dá a melhor separação
+# entre dias calmos (~0.12) e flares X (~0.90+).
+AR_CROP_FRAC = 0.25
 
 NASA_SDO_URLS: dict[str, str] = {
     "94":  "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_256_0094.jpg",
@@ -66,6 +74,55 @@ def preprocess_pil(image: Image.Image) -> torch.Tensor:
     return preprocess_array(arr4)
 
 
+# ── Recorte de região ativa (casar o domínio de treino) ─────────────────────────
+
+def _active_region_center(hot: np.ndarray) -> tuple[int, int]:
+    """Centro (y, x) da região ativa = pico de brilho suavizado.
+
+    `hot` é um mapa 2D [0,1] (usamos 94+131 Å, onde flares aparecem). O blur
+    gaussiano evita travar em pixels quentes isolados (raios cósmicos).
+    """
+    blurred = np.asarray(
+        Image.fromarray((np.clip(hot, 0, 1) * 255).astype(np.uint8))
+        .filter(ImageFilter.GaussianBlur(radius=6)),
+        dtype=np.float32,
+    )
+    cy, cx = np.unravel_index(int(blurred.argmax()), blurred.shape)
+    return int(cy), int(cx)
+
+
+def _crop_window(arr: np.ndarray, cy: int, cx: int, side: int) -> np.ndarray:
+    """Recorta uma janela quadrada `side`×`side` centrada em (cy, cx), presa às bordas."""
+    h, w = arr.shape
+    y0 = min(max(0, cy - side // 2), max(0, h - side))
+    x0 = min(max(0, cx - side // 2), max(0, w - side))
+    return arr[y0:y0 + side, x0:x0 + side]
+
+
+def active_region_crop(channels: list[np.ndarray], frac: float = AR_CROP_FRAC) -> np.ndarray:
+    """Recorta a região ativa nos 4 canais e redimensiona para (4, 256, 256).
+
+    Args:
+        channels: lista de 4 mapas 2D [0,1] (94, 131, 171, 304), mesmo tamanho,
+                  representando o DISCO INTEIRO.
+        frac:     lado da janela como fração do menor lado da imagem.
+
+    Returns:
+        ndarray (4, 256, 256) float32 — patch zoomado, no domínio do treino.
+
+    O centro é detectado UMA vez (em 94+131) e aplicado igual aos 4 canais,
+    preservando o alinhamento espacial entre comprimentos de onda.
+    """
+    cy, cx = _active_region_center(channels[0] + channels[1])
+    side = max(8, int(min(channels[0].shape) * frac))
+    out = np.empty((4, 256, 256), dtype=np.float32)
+    for i, c in enumerate(channels):
+        win = _crop_window(c, cy, cx, side)
+        img = Image.fromarray((np.clip(win, 0, 1) * 255).astype(np.uint8)).resize((256, 256))
+        out[i] = np.asarray(img, dtype=np.float32) / 255.0
+    return out
+
+
 # ── Fetch NASA SDO ─────────────────────────────────────────────────────────────
 
 def fetch_sdo_channels(timeout: int = 12) -> tuple[np.ndarray, list[str]]:
@@ -75,7 +132,7 @@ def fetch_sdo_channels(timeout: int = 12) -> tuple[np.ndarray, list[str]]:
         array_4ch  — ndarray (4, 256, 256) float32 [0, 1]
         warnings   — lista de canais que falharam (string "94", "131", ...)
     """
-    array_4ch = np.zeros((4, 256, 256), dtype=np.float32)
+    full: list[np.ndarray | None] = [None] * 4
     warnings: list[str] = []
 
     for i, ch in enumerate(CHANNELS):
@@ -83,12 +140,22 @@ def fetch_sdo_channels(timeout: int = 12) -> tuple[np.ndarray, list[str]]:
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "HELIOS-API/1.0"})
             with urllib.request.urlopen(req, timeout=timeout) as resp:
-                img = Image.open(resp).convert("L").resize((256, 256))
-                array_4ch[i] = np.array(img, dtype=np.float32) / 255.0
+                # Mantém o DISCO INTEIRO (sem resize) — o recorte da região ativa vem depois
+                img = Image.open(resp).convert("L")
+                full[i] = np.asarray(img, dtype=np.float32) / 255.0
         except Exception as exc:
             warnings.append(f"{ch}Å: {exc}")
 
-    return array_4ch, warnings
+    ok = [c for c in full if c is not None]
+    if not ok:
+        # Nenhum canal baixou — devolve array zerado (main.py converte em 502)
+        return np.zeros((4, 256, 256), dtype=np.float32), warnings
+
+    # Canais que falharam viram zeros do mesmo tamanho dos que baixaram
+    shape = ok[0].shape
+    channels = [c if c is not None else np.zeros(shape, dtype=np.float32) for c in full]
+
+    return active_region_crop(channels), warnings
 
 
 # ── Inferência ─────────────────────────────────────────────────────────────────

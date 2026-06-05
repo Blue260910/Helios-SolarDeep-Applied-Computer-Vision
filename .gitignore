@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# Ambientes
+.venv/
+venv/
+env/
+
+# Clones do Hugging Face Space / experimentos (não fazem parte da entrega)
+helios-space/
+API/helios-space/
+live-fix/
+
+# Sistema
+.DS_Store
+Thumbs.db
