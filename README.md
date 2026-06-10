@@ -8,8 +8,8 @@ Sistema de detecção de flares solares M/X-class usando redes neurais convoluci
 
 ## Links da Entrega
 
-- **Repositório GitHub:** _(este repositório público)_
-- **Vídeo de demonstração (até 3 min):** _<!-- TODO: inserir link do YouTube -->_
+- **Repositório GitHub:** [_(Link do Repositório)_](https://github.com/Blue260910/Helios-SolarDeep-Applied-Computer-Vision.git)
+- **Vídeo de demonstração (até 3 min): [_(Link do Video)_](https://www.youtube.com/watch?v=TvBZvfwZ88M)
 
 ---
 
